@@ -39,9 +39,12 @@ k6 run performance/escritura.js
 
 ## Estado
 
-- Código, pruebas, colección y scripts escritos y revisados, **pero todavía no ejecutados**: el entorno donde se redactaron no tenía el SDK de .NET.
-- La columna *Resultado obtenido* del guion y los defectos son proyecciones por análisis del código; hay que confirmarlos con la primera ejecución y adjuntar la evidencia (`.trx`, reporte de newman, `performance/results/*.md`).
-- Resultados esperados de `dotnet test`: ≈ 64 casos, 52 en verde y 12 en rojo (los de `KnownDefect`).
+- **Ejecutado de punta a punta** (.NET SDK 10.0.403, k6 v2.3.0, newman 6.2.3, macOS arm64). Evidencia real en `docs/evidencia/`.
+- `dotnet test`: 64 casos, **52 en verde y 12 en rojo** (los `KnownDefect`, exactamente lo esperado). `dotnet test --filter "Category!=KnownDefect"` queda 100 % verde. Evidencia: `docs/evidencia/resultado.trx`.
+- Postman/newman: 98 peticiones, 305 aserciones, 20 fallidas — exactamente las marcadas `[DEF-xxx]`; el resto pasa. Evidencia: `docs/evidencia/newman.json`.
+- k6: `lectura.js` y `escritura.js` **PASA** (ver `performance/results/lectura.md`, `lectura-5000.md` y `escritura.md`). Se confirma la tendencia de degradación de DEF-008 con el volumen (sin romper el umbral a esta escala) y se descarta, a 25 VUs, el riesgo de bloqueos de escritura de SQLite.
+- Los 10 defectos sembrados (DEF-001 a DEF-010) quedaron confirmados con evidencia real (xUnit, newman y `curl`, ver `docs/evidencia/defectos-curl.txt` y `docs/04-defectos.md`). No se encontró ningún defecto real adicional en la API.
+- Se corrigió un error del propio script `performance/lectura.js` (URL sin codificar), no un defecto de la API.
 
 ## Convención de commits
 
