@@ -39,7 +39,7 @@ Los supuestos deben validarse con el responsable del producto; si alguno cambia,
 |---|---|---|---|
 | Unitario | xUnit | Funciones puras (validación de correo) | `tests/HrApi.Tests/ValidatorsTests.cs` |
 | Integración / API | xUnit + `WebApplicationFactory` + EF Core (SQLite) | Endpoints, reglas de negocio, persistencia real, integridad referencial | `tests/HrApi.Tests/*Tests.cs` |
-| Contrato / funcional exploratorio | Postman (+ newman) | Estado, estructura y tiempo de respuesta, ejecutable por cualquiera del equipo | `postman/` |
+| Contrato / API | Postman (+ newman) | Todos los servicios, por entidad y operación; estado, estructura y tiempo de respuesta; ejecutable de forma desatendida con el archivo de entorno | `postman/` |
 | Rendimiento | k6 | Carga de consulta y de escritura con umbrales | `performance/` |
 
 ## 1.6 Técnicas de diseño de casos
@@ -88,7 +88,7 @@ dotnet test --filter "Category=KnownDefect"     # solo los casos que exponen def
 dotnet test --logger "trx;LogFileName=resultado.trx"   # evidencia de ejecución
 
 dotnet run --project src/HrApi --urls http://localhost:5000
-newman run postman/HrApi.postman_collection.json --env-var baseUrl=http://localhost:5000 -r cli,json
+newman run postman/HrApi.postman_collection.json -e postman/HrApi.postman_environment.json -r cli,json
 k6 run performance/lectura.js
 k6 run performance/escritura.js
 ```

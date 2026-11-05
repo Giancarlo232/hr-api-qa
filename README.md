@@ -10,7 +10,7 @@ El reto pide demostrar, con evidencia objetiva y repetible, que la API cumple lo
 |---|---|
 | `src/HrApi` | API de referencia (minimal API + EF Core + SQLite). Defectos marcados como `DEF-00x` en el código |
 | `tests/HrApi.Tests` | Pruebas xUnit unitarias y de integración (`WebApplicationFactory`) |
-| `postman/` | Colección con aserciones de estado, estructura y tiempo de respuesta |
+| `postman/` | Colección por entidad y operación (GET/POST/PUT/DELETE) y su archivo de entorno, con aserciones de estado, estructura y tiempo |
 | `performance/` | Escenarios k6 de carga (consulta y escritura) con umbrales |
 | `docs/01-estrategia-de-pruebas.md` | Alcance, niveles, técnicas, supuestos, criterios y riesgos |
 | `docs/02-guion-de-pruebas.md` | Casos con objetivo, precondiciones, datos, pasos, esperado y obtenido |
@@ -32,7 +32,7 @@ dotnet test --filter "Defecto=DEF-003"         # un defecto concreto
 dotnet test --filter "Req=RF-04"               # los casos de un requerimiento
 
 dotnet run --project src/HrApi --urls http://localhost:5000
-newman run postman/HrApi.postman_collection.json --env-var baseUrl=http://localhost:5000
+newman run postman/HrApi.postman_collection.json -e postman/HrApi.postman_environment.json
 k6 run performance/lectura.js
 k6 run performance/escritura.js
 ```

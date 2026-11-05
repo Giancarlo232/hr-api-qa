@@ -90,6 +90,47 @@ Convenciones: `{…}` = valor generado por la prueba (nombres y NIT únicos). *P
 | TC-PERF-01 | Estabilidad de **consulta** bajo carga | API arriba; 20 empresas y 1000 colaboradores sembrados | `performance/lectura.js`: 0→25→50 VUs durante 2 min | Error < 1 %, p95 < 500 ms, p99 < 1 s | Pendiente de ejecutar. Hipótesis: `colaboradores` puede superar el umbral por DEF-008 |
 | TC-PERF-02 | Estabilidad de **escritura** bajo carga | API arriba | `performance/escritura.js`: 0→10→25 VUs durante 2 min (POST empresa, POST colaborador, PUT empresa) | Error < 2 %, p95 < 800 ms, p99 < 1.5 s | Pendiente de ejecutar. Riesgo: bloqueos de escritura de SQLite |
 
-## 2.8 Contrato en Postman
+## 2.8 Colección de Postman (contrato y cobertura de todos los servicios)
 
-Las peticiones de `postman/HrApi.postman_collection.json` repiten los casos clave (nombre con el mismo `TC-…`) y añaden en cada una la aserción de **código de estado**, **estructura** (cuando aplica) y **tiempo de respuesta < 500 ms**. Las peticiones con `[DEF-xxx]` en el nombre se espera que fallen.
+`postman/HrApi.postman_collection.json` está organizada **por entidad y por operación** (`1. Países … 5. Colaboradores`, y dentro de cada una las carpetas `POST`, `GET`, `PUT`, `DELETE`) y cubre todos los endpoints de la API. Usa variables de **entorno** (`postman/HrApi.postman_environment.json`: `baseUrl`, `token` e identificadores generados), sin valores escritos a mano en cada petición. Las peticiones `Preparar: …` crean datos desechables y no son casos de prueba.
+
+Cada petición incluye tres aserciones: **código de estado**, **estructura de la respuesta** (objeto, arreglo, página, mensaje de error o sin cuerpo, según el caso) y **tiempo de respuesta < 500 ms**. Las peticiones con `[DEF-xxx]` en el nombre se espera que fallen.
+
+Los casos con identificador `TC-…` de las secciones anteriores aparecen con el mismo nombre en la colección. Los siguientes son casos adicionales que existen solo en Postman (completan GET, PUT y DELETE de cada entidad):
+
+| ID | Objetivo | Petición | Resultado esperado | Resultado obtenido |
+|---|---|---|---|---|
+| TC-API-01 | Listar países | GET `/api/paises` | 200 OK | OK |
+| TC-API-02 | Obtener país por id | GET `/api/paises/{{paisId}}` | 200 OK | OK |
+| TC-API-03 | PUT país inexistente → 404 | PUT `/api/paises/999999` | 404 | OK |
+| TC-API-04 | PUT país sin nombre → 400 | PUT `/api/paises/{{paisId}}` | 400 con mensaje de error | OK |
+| TC-API-05 | Consultar país eliminado → 404 | GET `/api/paises/{{delPaisId}}` | 404 | OK |
+| TC-API-06 | Eliminar país inexistente → 404 | DELETE `/api/paises/999999` | 404 | OK |
+| TC-API-07 | Crear departamento sin nombre → 400 | POST `/api/departamentos` | 400 con mensaje de error | OK |
+| TC-API-08 | Listar departamentos | GET `/api/departamentos` | 200 OK | OK |
+| TC-API-09 | Listar departamentos de un país | GET `/api/departamentos?paisId={{paisId}}` | 200 OK | OK |
+| TC-API-10 | Obtener departamento por id | GET `/api/departamentos/{{departamentoId}}` | 200 OK | OK |
+| TC-API-11 | Obtener departamento inexistente → 404 | GET `/api/departamentos/999999` | 404 | OK |
+| TC-API-12 | Actualizar departamento | PUT `/api/departamentos/{{departamentoId}}` | 200 OK | OK |
+| TC-API-13 | PUT departamento inexistente → 404 | PUT `/api/departamentos/999999` | 404 | OK |
+| TC-API-14 | Eliminar departamento sin dependientes → 204 | DELETE `/api/departamentos/{{delDepId}}` | 204 sin cuerpo | OK |
+| TC-API-15 | Consultar departamento eliminado → 404 | GET `/api/departamentos/{{delDepId}}` | 404 | OK |
+| TC-API-16 | Eliminar departamento inexistente → 404 | DELETE `/api/departamentos/999999` | 404 | OK |
+| TC-API-17 | Crear municipio sin nombre → 400 | POST `/api/municipios` | 400 con mensaje de error | OK |
+| TC-API-18 | Listar municipios | GET `/api/municipios` | 200 OK | OK |
+| TC-API-19 | Obtener municipio por id | GET `/api/municipios/{{municipioId}}` | 200 OK | OK |
+| TC-API-20 | Obtener municipio inexistente → 404 | GET `/api/municipios/999999` | 404 | OK |
+| TC-API-21 | Actualizar municipio | PUT `/api/municipios/{{municipioId}}` | 200 OK | OK |
+| TC-API-22 | PUT municipio inexistente → 404 | PUT `/api/municipios/999999` | 404 | OK |
+| TC-API-23 | Eliminar municipio sin dependientes → 204 | DELETE `/api/municipios/{{delMunId}}` | 204 sin cuerpo | OK |
+| TC-API-24 | Consultar municipio eliminado → 404 | GET `/api/municipios/{{delMunId}}` | 404 | OK |
+| TC-API-25 | Eliminar municipio con empresas → 409 | DELETE `/api/municipios/{{delMunId}}` | 409 con mensaje de error | OK |
+| TC-API-26 | Eliminar municipio inexistente → 404 | DELETE `/api/municipios/999999` | 404 | OK |
+| TC-API-27 | Obtener empresa por id | GET `/api/empresas/{{empresaId}}` | 200 OK | OK |
+| TC-API-28 | Eliminar empresa sin colaboradores → 204 | DELETE `/api/empresas/{{delEmpresaId}}` | 204 sin cuerpo | OK |
+| TC-API-29 | Consultar empresa eliminada → 404 | GET `/api/empresas/{{delEmpresaId}}` | 404 | OK |
+| TC-API-30 | Eliminar empresa inexistente → 404 | DELETE `/api/empresas/999999` | 404 | OK |
+| TC-API-31 | Listar colaboradores | GET `/api/colaboradores` | 200 OK | OK |
+| TC-API-32 | Buscar colaboradores por nombre | GET `/api/colaboradores?nombre=Ana` | 200 OK | OK |
+| TC-API-33 | Obtener colaborador por id | GET `/api/colaboradores/{{colabId}}` | 200 OK | OK |
+| TC-API-34 | Consultar colaborador eliminado → 404 | GET `/api/colaboradores/{{delColabId}}` | 404 | **FALLA DEF-006** |

@@ -4,6 +4,17 @@ Defectos sembrados en la API de referencia para esta evaluación. Cada uno indic
 
 > **Estado de la evidencia.** Los resultados "obtenidos" salen del análisis del código fuente (cada defecto está marcado con un comentario `DEF-00x`). Al ejecutar las pruebas, adjuntar en `docs/evidencia/` el `.trx` de xUnit y el reporte JSON de newman (comandos en `01-estrategia-de-pruebas.md`, sección 1.11) y capturar las respuestas de los `curl` indicados.
 
+## Ambiente de detección
+
+| Elemento | Valor |
+|---|---|
+| Entorno | Local de desarrollo (no productivo) |
+| Aplicación | HrApi, versión = commit del repositorio (`git rev-parse --short HEAD`) |
+| Runtime y datos | .NET 10, Entity Framework Core 10, SQLite (archivo local; temporal en xUnit) |
+| URL base | `http://localhost:5000` (Postman/k6); en memoria con `WebApplicationFactory` (xUnit) |
+| Herramientas | xUnit, Postman/newman, k6 |
+| Sistema operativo y versión del SDK | A completar al ejecutar: `dotnet --info` |
+
 ## Resumen
 
 | ID | Título | Severidad | Prioridad | Módulo | Requerimiento | Caso |
@@ -24,6 +35,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 ---
 
 ## DEF-001 – NIT duplicado en empresas
+- **Severidad:** Alta · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `EmpresasEndpoints.cs` (POST no consulta duplicados) y `AppDbContext.cs` (sin índice único sobre `Nit`).
 - **Pasos:** crear una empresa con NIT `1234567-8`; crear otra con el mismo NIT.
@@ -39,6 +51,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** índice único en `Nit` y verificación previa que responda 409.
 
 ## DEF-002 – Edad 0 y negativa
+- **Severidad:** Media · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `ColaboradoresEndpoints.Validar` solo rechaza `Edad > 120`.
 - **Pasos:** crear un colaborador con `edad=-1` (y luego `0`).
@@ -48,6 +61,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** validar `Edad is >= 1 and <= 120`.
 
 ## DEF-003 – Geografía incoherente en empresas
+- **Severidad:** Alta · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `EmpresasEndpoints.Validar` comprueba que país, departamento y municipio existan, pero no que se pertenezcan entre sí.
 - **Pasos:** crear dos geografías G1 y G2; registrar una empresa con país y departamento de G1 y el municipio de G2 (y, en otro caso, país de G1 con departamento y municipio de G2).
@@ -57,6 +71,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** verificar `Departamento.PaisId == PaisId` y `Municipio.DepartamentoId == DepartamentoId`.
 
 ## DEF-004 – Eliminar país con departamentos
+- **Severidad:** Alta · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `GeografiaEndpoints.MapPaises` (DELETE no revisa dependientes); la FK `Restrict` lanza una excepción no controlada.
 - **Pasos:** crear país → departamento; `DELETE /api/paises/{id}`.
@@ -67,6 +82,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** `AnyAsync` sobre departamentos antes de borrar.
 
 ## DEF-005 – Correo del colaborador sin validar
+- **Severidad:** Media · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `ColaboradoresEndpoints.Validar` solo exige que no esté vacío (la empresa sí usa `Validators.Email`).
 - **Pasos:** crear un colaborador con `email="sin-arroba"` y con `a@b`.
@@ -76,6 +92,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** reutilizar `Validators.Email`.
 
 ## DEF-006 – Colaborador inexistente devuelve 200
+- **Severidad:** Media · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `ColaboradoresEndpoints`, GET por id devuelve `Results.Ok(null)`.
 - **Pasos:** `GET /api/colaboradores/999999`.
@@ -86,6 +103,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** `c is null ? Results.NotFound() : Results.Ok(Map(c))`.
 
 ## DEF-007 – Asociación colaborador-empresa duplicada
+- **Severidad:** Media · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `POST /api/colaboradores/{id}/empresas/{empresaId}` no comprueba la relación existente; la tabla no tiene índice único `(ColaboradorId, EmpresaId)`.
 - **Pasos:** crear un colaborador en la empresa E1; asociarlo otra vez a E1.
@@ -95,6 +113,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** verificar la relación y crear el índice único.
 
 ## DEF-008 – Listado de colaboradores sin paginación y con filtro en memoria
+- **Severidad:** Media · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `GET /api/colaboradores` carga toda la tabla con `Include` y filtra con LINQ to Objects; no hay paginación (a diferencia de empresas).
 - **Pasos:** sembrar 1000+ colaboradores; ejecutar `performance/lectura.js` y observar `http_req_duration{endpoint:colaboradores}`.
@@ -104,6 +123,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** paginar y filtrar en la base de datos.
 
 ## DEF-009 – PUT crea la empresa si no existe
+- **Severidad:** Alta · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `EmpresasEndpoints` PUT hace un *upsert* implícito.
 - **Pasos:** `PUT /api/empresas/999999` con un cuerpo válido.
@@ -113,6 +133,7 @@ Severidad: **Alta** = datos incorrectos o error del servidor; **Media** = valida
 - **Corrección sugerida:** responder 404 cuando `FindAsync` devuelva null.
 
 ## DEF-010 – POST de empresa responde 200 en lugar de 201
+- **Severidad:** Baja · **Ambiente:** local de desarrollo (ver «Ambiente de detección»).
 
 - **Origen:** `EmpresasEndpoints` POST devuelve `Results.Ok` (países, departamentos, municipios y colaboradores sí devuelven 201).
 - **Pasos:** crear una empresa válida.
