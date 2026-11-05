@@ -70,7 +70,7 @@ export default function (datos) {
   const c = http.get(`${BASE}/api/empresas/${datos.empresaId}`, { tags: { endpoint: 'empresa_id' } });
   check(c, { 'empresa por id 200': ok });
 
-  const d = http.get(`${BASE}/api/colaboradores?nombre=Colaborador K6 1`, { tags: { endpoint: 'colaboradores' } });
+  const d = http.get(`${BASE}/api/colaboradores?nombre=${encodeURIComponent('Colaborador K6 1')}`, { tags: { endpoint: 'colaboradores' } });
   check(d, { 'colaboradores 200': ok });
 
   sleep(1);
