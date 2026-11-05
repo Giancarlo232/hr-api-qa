@@ -45,15 +45,18 @@
 
 Cada ejecución escribe `performance/results/<escenario>.md` con las métricas (solicitudes/s, promedio, p90, p95, p99, máximo, tasa de error) y una tabla de umbrales con **PASA / NO PASA** y un veredicto global. El JSON crudo se guarda junto al reporte (ignorado en git).
 
-## 5.6 Hipótesis a confirmar con la primera ejecución
+## 5.6 Hipótesis confirmadas/descartadas con la ejecución real
 
-| Hipótesis | Cómo se confirma |
-|---|---|
-| DEF-008: el tiempo de `GET /api/colaboradores` crece con el volumen y puede incumplir p95 < 500 ms | Comparar el umbral `endpoint:colaboradores` con `-e COLABORADORES=200` y `-e COLABORADORES=5000` |
-| SQLite (un único escritor) puede producir errores de bloqueo en escritura con 25 VUs | Revisar la tasa de error y los 5xx de `escritura.js`; si se confirma, repetir contra el motor de producción |
+| Hipótesis | Cómo se confirmó | Resultado |
+|---|---|---|
+| DEF-008: el tiempo de `GET /api/colaboradores` crece con el volumen y puede incumplir p95 < 500 ms | `k6 run performance/lectura.js` (volumen acumulado ~3 300–13 000 colaboradores entre corridas) y `k6 run -e COLABORADORES=5000 performance/lectura.js` | **Parcialmente confirmada.** El p95 del endpoint sube de forma medible con el volumen (≈ 32 ms → ≈ 70 ms), consistente con el filtro en memoria sin paginar de DEF-008. A este volumen (decenas de miles de filas) el umbral de 500 ms sigue en PASA; la pendiente observada indica que con datos de producción (cientos de miles de filas) sí lo incumpliría. Ver `performance/results/lectura.md` y `lectura-5000.md`. |
+| SQLite (un único escritor) puede producir errores de bloqueo en escritura con 25 VUs | `k6 run performance/escritura.js` (0→10→25 VUs, POST empresa + POST colaborador + PUT empresa por iteración, 2 min) | **Descartada a esta concurrencia.** 0 % de error, p95 ≈ 3.2 ms, p99 ≈ 5.7 ms; no se observaron 5xx ni timeouts atribuibles a bloqueos de SQLite. No se puede descartar a mayor concurrencia o con transacciones más largas; sería necesario repetir contra un motor cliente-servidor para dimensionar producción. Ver `performance/results/escritura.md`. |
+
+Durante esta ejecución se detectó y corrigió un bug en el propio script `performance/lectura.js` (no en la API): la URL de `GET /api/colaboradores?nombre=...` llevaba un espacio sin codificar y el servidor respondía `400` en cada iteración, inflando la tasa de error a ~23 %. Se corrigió con `encodeURIComponent`; no se tocó ningún defecto sembrado.
 
 ## 5.7 Limitaciones
 
-- El repositorio se redactó sin poder compilar ni ejecutar (el SDK de .NET no estaba disponible), por lo que los resultados "obtenidos" son proyecciones y no hay números de rendimiento. Esto debe sustituirse con la primera ejecución.
+- La ejecución se hizo en una sola máquina de desarrollo (macOS, .NET SDK 10.0.403); no hay aislamiento de red ni recursos dedicados, por lo que los tiempos absolutos sirven para comparar entre corridas, no para dimensionar producción.
 - La carga contra SQLite local no equivale a la de producción: sirve para comparar versiones, no para dimensionar.
+- La base de datos fue acumulando filas entre corridas de k6 (no se reinició entre ejecuciones), lo que explica por qué la corrida "default" ya partía de ~3 000–8 000 colaboradores en los distintos intentos; esto es consistente con el objetivo de observar degradación por volumen, pero significa que el número exacto de filas en cada corrida no está fijado de antemano.
 - No se cubre seguridad ni autenticación porque el enunciado no las describe.

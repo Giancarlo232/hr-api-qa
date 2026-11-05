@@ -2,7 +2,7 @@
 
 Cada caso indica objetivo, precondiciones, datos de entrada, pasos, resultado esperado y resultado obtenido. El identificador `TC-…` coincide con el atributo `[Trait("Caso", …)]` de la prueba xUnit y con el nombre de la petición de Postman.
 
-> **Estado de ejecución.** La columna *Resultado obtenido* es una **proyección por análisis del código** de la API de referencia (el SDK de .NET no estaba disponible donde se redactó el repositorio). Debe confirmarse con la primera ejecución de `dotnet test` y reemplazarse por el resultado real y la evidencia (`.trx`, reporte de newman). `OK` = coincide con lo esperado; `FALLA DEF-xxx` = difiere y origina el defecto indicado.
+> **Estado de ejecución.** La columna *Resultado obtenido* refleja la ejecución real de `dotnet test` (`docs/evidencia/resultado.trx`: 64 casos, 52 verdes, 12 rojos) y de la colección de Postman con newman (`docs/evidencia/newman.json`: 98 peticiones, 305 aserciones, 20 fallidas — las marcadas `[DEF-xxx]`). `OK` = coincide con lo esperado; `FALLA DEF-xxx` = difiere y origina el defecto indicado.
 
 Convenciones: `{…}` = valor generado por la prueba (nombres y NIT únicos). *Pre-geo* = existe un país, un departamento de ese país y un municipio de ese departamento.
 
@@ -87,8 +87,8 @@ Convenciones: `{…}` = valor generado por la prueba (nombres y NIT únicos). *P
 
 | ID | Objetivo | Precondiciones | Escenario | Resultado esperado | Resultado obtenido |
 |---|---|---|---|---|---|
-| TC-PERF-01 | Estabilidad de **consulta** bajo carga | API arriba; 20 empresas y 1000 colaboradores sembrados | `performance/lectura.js`: 0→25→50 VUs durante 2 min | Error < 1 %, p95 < 500 ms, p99 < 1 s | Pendiente de ejecutar. Hipótesis: `colaboradores` puede superar el umbral por DEF-008 |
-| TC-PERF-02 | Estabilidad de **escritura** bajo carga | API arriba | `performance/escritura.js`: 0→10→25 VUs durante 2 min (POST empresa, POST colaborador, PUT empresa) | Error < 2 %, p95 < 800 ms, p99 < 1.5 s | Pendiente de ejecutar. Riesgo: bloqueos de escritura de SQLite |
+| TC-PERF-01 | Estabilidad de **consulta** bajo carga | API arriba; 20 empresas y 1000 colaboradores sembrados | `performance/lectura.js`: 0→25→50 VUs durante 2 min | Error < 1 %, p95 < 500 ms, p99 < 1 s | **PASA** (`performance/results/lectura.md`): 0 % error, p95 ≈ 70 ms, p99 ≈ 113 ms. Repetido con `-e COLABORADORES=5000` (`lectura-5000.md`): también **PASA**, p95 ≈ 71 ms. Confirma la tendencia de degradación de DEF-008 (p95 sube de ~32 ms a ~70 ms al crecer el volumen) sin romper el umbral a esta escala |
+| TC-PERF-02 | Estabilidad de **escritura** bajo carga | API arriba | `performance/escritura.js`: 0→10→25 VUs durante 2 min (POST empresa, POST colaborador, PUT empresa) | Error < 2 %, p95 < 800 ms, p99 < 1.5 s | **PASA** (`performance/results/escritura.md`): 0 % error, p95 ≈ 3.2 ms, p99 ≈ 5.7 ms. No se observan bloqueos de SQLite con 25 VUs concurrentes |
 
 ## 2.8 Colección de Postman (contrato y cobertura de todos los servicios)
 

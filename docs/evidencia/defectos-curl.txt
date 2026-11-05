@@ -1,0 +1,128 @@
+=== DEF-001: NIT duplicado ===
+geografia: pais=15 dep=14 mun=13
+--- primera creación ---
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:32 GMT
+Server: Kestrel
+Transfer-Encoding: chunked
+
+{"id":1653,"nit":"DEF001-1","razonSocial":"A","nombreComercial":"A","telefono":"1","email":"a@a.com","paisId":15,"departamentoId":14,"municipioId":13}
+--- segunda creación con el mismo NIT (se espera 409, obtenido real abajo) ---
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:32 GMT
+Server: Kestrel
+Transfer-Encoding: chunked
+
+{"id":1654,"nit":"DEF001-1","razonSocial":"B","nombreComercial":"B","telefono":"2","email":"b@b.com","paisId":15,"departamentoId":14,"municipioId":13}
+
+=== DEF-002: Edad no positiva en colaboradores ===
+--- edad=-1 ---
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:43 GMT
+Server: Kestrel
+Location: /api/colaboradores/10550
+Transfer-Encoding: chunked
+
+{"id":10550,"nombreCompleto":"X","edad":-1,"telefono":"1","email":"x1@x.com","empresaIds":[1653]}
+--- edad=0 ---
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:43 GMT
+Server: Kestrel
+Location: /api/colaboradores/10551
+Transfer-Encoding: chunked
+
+{"id":10551,"nombreCompleto":"X","edad":0,"telefono":"1","email":"x0@x.com","empresaIds":[1653]}
+
+=== DEF-003: Geografía incoherente ===
+geografia G2: pais=16 dep=15 mun=14
+--- municipio de otro departamento (G1 pais/dep + G2 municipio) ---
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:43 GMT
+Server: Kestrel
+Transfer-Encoding: chunked
+
+{"id":1655,"nit":"DEF003-1","razonSocial":"C","nombreComercial":"C","telefono":"1","email":"c@c.com","paisId":15,"departamentoId":14,"municipioId":14}
+
+--- departamento de otro país (G1 pais + G2 dep/municipio) ---
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:43 GMT
+Server: Kestrel
+Transfer-Encoding: chunked
+
+{"id":1656,"nit":"DEF003-2","razonSocial":"D","nombreComercial":"D","telefono":"1","email":"d@d.com","paisId":15,"departamentoId":15,"municipioId":14}
+
+=== DEF-004: Eliminar país con departamentos → 500 en lugar de 409 ===
+HTTP/1.1 500 Internal Server Error
+Content-Length: 0
+Date: Thu, 05 Nov 2026 04:05:52 GMT
+Server: Kestrel
+
+
+
+=== DEF-005: Correo inválido en colaboradores ===
+--- sin-arroba ---
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:52 GMT
+Server: Kestrel
+Location: /api/colaboradores/10552
+Transfer-Encoding: chunked
+
+{"id":10552,"nombreCompleto":"Y","edad":30,"telefono":"1","email":"sin-arroba","empresaIds":[1653]}
+--- a@b ---
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:52 GMT
+Server: Kestrel
+Location: /api/colaboradores/10553
+Transfer-Encoding: chunked
+
+{"id":10553,"nombreCompleto":"Y","edad":30,"telefono":"1","email":"a@b","empresaIds":[1653]}
+
+=== DEF-006: Colaborador inexistente devuelve 200 ===
+HTTP/1.1 200 OK
+Content-Length: 0
+Date: Thu, 05 Nov 2026 04:05:52 GMT
+Server: Kestrel
+
+
+
+=== DEF-007: Asociación colaborador-empresa duplicada ===
+colaborador=10554 ya en empresa 1653
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:05:52 GMT
+Server: Kestrel
+Transfer-Encoding: chunked
+
+{"id":10554,"nombreCompleto":"Z","edad":30,"telefono":"1","email":"z@z.com","empresaIds":[1653,1653]}
+
+=== DEF-009: PUT sobre empresa inexistente la crea ===
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:06:03 GMT
+Server: Kestrel
+Transfer-Encoding: chunked
+
+{"id":1657,"nit":"DEF009-1","razonSocial":"E","nombreComercial":"E","telefono":"1","email":"e@e.com","paisId":15,"departamentoId":14,"municipioId":13}
+
+--- confirmando que el registro quedó creado con id distinto de 999999 ---
+
+status=404
+
+
+=== DEF-010: POST empresa responde 200 en lugar de 201 ===
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Date: Thu, 05 Nov 2026 04:06:03 GMT
+Server: Kestrel
+Transfer-Encoding: chunked
+
+{"id":1658,"nit":"DEF010-1","razonSocial":"F","nombreComercial":"F","telefono":"1","email":"f@f.com","paisId":15,"departamentoId":14,"municipioId":13}
+
