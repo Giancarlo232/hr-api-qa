@@ -9,7 +9,7 @@ Defectos sembrados en la API de referencia para esta evaluación. Cada uno indic
 | Elemento | Valor |
 |---|---|
 | Entorno | Local de desarrollo (no productivo) |
-| Aplicación | HrApi, versión = commit `b3c32a6` (y posteriores de este mismo repositorio) |
+| Aplicación | HrApi, versión = commit `bc1f9a1` (y posteriores de este mismo repositorio) |
 | Runtime y datos | .NET 10 (SDK 10.0.403), Entity Framework Core 10, SQLite (archivo local; temporal en xUnit) |
 | URL base | `http://localhost:5000` (Postman/k6); en memoria con `WebApplicationFactory` (xUnit) |
 | Herramientas | xUnit (dotnet test), Postman 6.2.3 (newman), k6 v2.3.0 |
